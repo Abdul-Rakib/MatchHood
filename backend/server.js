@@ -13,6 +13,7 @@ import mongoose from "mongoose";
 
 import userRoutes from "./routes/user.js";
 import authRoutes from "./routes/auth.js";
+import pgRoutes from "./routes/pgRoutes.js"
 
 dotenv.config();
 cloudinaryConfig();
@@ -56,6 +57,7 @@ const __dirname = path.dirname(__filename);
 // API Routes
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/user", userRoutes);
+app.use("/api/v1/pgs", pgRoutes);
 
 
 if (process.env.NODE_ENV === "production") {
