@@ -119,6 +119,7 @@ export const matchPGs = (req, res) => {
 
     const cleanedPGs = sortedPGs.map(pg => ({
       matchScore: pg.matchScore,
+      matchReasons: pg.matchReasons,
       pg_id: pg.pg_id,
       title: pg.title,
       price: pg.price,

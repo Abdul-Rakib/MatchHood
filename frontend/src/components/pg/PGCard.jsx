@@ -65,16 +65,31 @@ const PGCard = ({ pg }) => {
           <span className="text-sm text-gray-600">{pg.location}</span>
         </div>
 
-        {/* Top Features */}
+        {/* Match Reasons or Top Features */}
         <div className="mb-3">
-          <h4 className="text-sm font-medium text-gray-700 mb-2">Top Features:</h4>
-          <div className="flex flex-wrap gap-1">
-            {getTopFeatures(pg).map((feature, index) => (
-              <span key={index} className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
-                {feature}
-              </span>
-            ))}
-          </div>
+          {pg.matchReasons && pg.matchReasons.length > 0 ? (
+            <>
+              <h4 className="text-sm font-medium text-gray-700 mb-2">Why it matches:</h4>
+              <div className="flex flex-wrap gap-1">
+                {pg.matchReasons.map((reason, index) => (
+                  <span key={index} className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-xs">
+                    {reason}
+                  </span>
+                ))}
+              </div>
+            </>
+          ) : (
+            <>
+              <h4 className="text-sm font-medium text-gray-700 mb-2">Top Features:</h4>
+              <div className="flex flex-wrap gap-1">
+                {getTopFeatures(pg).map((feature, index) => (
+                  <span key={index} className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
+                    {feature}
+                  </span>
+                ))}
+              </div>
+            </>
+          )}
         </div>
 
         {/* Description */}
