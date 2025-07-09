@@ -16,6 +16,7 @@ import KycStatus from './pages/dashboard/kycStatus';
 import ProtectedRoute from './routes/protectedRoutes';
 import SearchPage from './pages/pg/SearchPage';
 import PGDetailsPage from './pages/pg/PGDetailsPage';
+import NotFoundPage from './pages/NotFoundPage';
 function App() {
 
   const { pathname } = useLocation();
@@ -52,6 +53,9 @@ function App() {
           <Route index element={<Profile />} />
           <Route path="kyc" element={<KycStatus />} />
         </Route>
+
+        {/* Catch all route - 404 page */}
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </>
   );
