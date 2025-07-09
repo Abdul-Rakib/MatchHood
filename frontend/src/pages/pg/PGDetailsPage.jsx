@@ -1,17 +1,29 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import usePGDetails from '../../../hooks/usePGDetails';
+import PGSidebar from './PGSidebar'; // Assuming PGSidebar is in the same directory
 
 const PGDetailsPage = () => {
   const { pg_id } = useParams();
   const navigate = useNavigate();
   const { fetchPGDetails, loading, error, pgDetails } = usePGDetails();
+  const [activeTab, setActiveTab] = useState('');
 
   useEffect(() => {
     if (pg_id) {
       fetchPGDetails(pg_id);
     }
   }, [pg_id]);
+
+  // Initialize active tab when pgDetails loads
+  useEffect(() => {
+    if (pgDetails?.nearby_landmarks_by_category) {
+      const categories = Object.keys(pgDetails.nearby_landmarks_by_category);
+      if (categories.length > 0 && !activeTab) {
+        setActiveTab(categories[0]);
+      }
+    }
+  }, [pgDetails, activeTab]);
 
   const handleBackToSearch = () => {
     navigate('/search');
@@ -69,6 +81,10 @@ const PGDetailsPage = () => {
     return nearbyPlaces;
   };
 
+  const formatCategoryName = (category) => {
+    return category.replace(/([A-Z])/g, ' $1').trim();
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
@@ -87,13 +103,39 @@ const PGDetailsPage = () => {
           <p className="text-gray-600 mt-2">{pgDetails.location}</p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 relative">
+
           {/* Main Content */}
           <div className="lg:col-span-2">
             {/* Images */}
             <div className="bg-white rounded-lg shadow-md p-6 mb-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Photos</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Mobile: Horizontal scroll, Desktop: Grid */}
+              <div className="md:hidden">
+                <div className="flex gap-4 overflow-x-auto pb-4" style={{ scrollbarWidth: 'thin' }}>
+                  {pgDetails.all_photos && pgDetails.all_photos.length > 0 ? (
+                    pgDetails.all_photos.slice(0, 4).map((photo, index) => (
+                      <img
+                        key={index}
+                        src={photo}
+                        alt={`${pgDetails.title} - Photo ${index + 1}`}
+                        className="w-60 h-48 object-cover rounded-lg flex-shrink-0"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                        }}
+                      />
+                    ))
+                  ) : (
+                    <div className="w-60 h-48 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <svg className="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                  )}
+                </div>
+              </div>
+              {/* Desktop: Grid */}
+              <div className="hidden md:grid grid-cols-1 md:grid-cols-2 gap-4">
                 {pgDetails.all_photos && pgDetails.all_photos.length > 0 ? (
                   pgDetails.all_photos.slice(0, 4).map((photo, index) => (
                     <img
@@ -125,7 +167,21 @@ const PGDetailsPage = () => {
             {/* Amenities */}
             <div className="bg-white rounded-lg shadow-md p-6 mb-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Amenities</h2>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {/* Mobile: Horizontal scroll, Desktop: Grid */}
+              <div className="md:hidden">
+                <div className="flex gap-3 overflow-x-auto pb-4" style={{ scrollbarWidth: 'thin' }}>
+                  {formatAmenities(pgDetails.common_amenities).map((amenity, index) => (
+                    <div key={index} className="flex items-center space-x-2 bg-gray-50 px-3 py-2 rounded-lg whitespace-nowrap flex-shrink-0">
+                      <svg className="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      <span className="text-gray-700">{amenity}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              {/* Desktop: Grid */}
+              <div className="hidden md:grid grid-cols-2 md:grid-cols-3 gap-3">
                 {formatAmenities(pgDetails.common_amenities).map((amenity, index) => (
                   <div key={index} className="flex items-center space-x-2">
                     <svg className="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -137,122 +193,140 @@ const PGDetailsPage = () => {
               </div>
             </div>
 
-            {/* Nearby Places */}
-            {pgDetails.nearby_landmarks_by_category && (
+            {/* Food Details */}
+            {pgDetails.food_details && (
               <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Nearby Places</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {Object.entries(formatNearbyPlaces(pgDetails.nearby_landmarks_by_category)).map(([category, places]) => (
-                    <div key={category} className="space-y-2">
-                      <h3 className="font-medium text-gray-900 capitalize">{category}</h3>
-                      <div className="space-y-1">
-                        {Array.isArray(places) ? places.slice(0, 3).map((place, index) => (
-                          <p key={index} className="text-sm text-gray-600">{place}</p>
-                        )) : (
-                          <p className="text-sm text-gray-600">{places}</p>
-                        )}
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">Food Details</h2>
+                {/* Mobile: Horizontal scroll, Desktop: Grid */}
+                <div className="md:hidden">
+                  <div className="flex gap-4 overflow-x-auto pb-4" style={{ scrollbarWidth: 'thin' }}>
+                    {Object.entries(pgDetails.food_details).map(([key, value]) => (
+                      <div key={key} className="flex-shrink-0 w-48 p-3 bg-gray-50 rounded-lg">
+                        <div className="text-gray-600 text-sm mb-1 capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</div>
+                        <div className="font-medium text-gray-900">{value}</div>
                       </div>
+                    ))}
+                  </div>
+                </div>
+                {/* Desktop: Grid */}
+                <div className="hidden md:grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {Object.entries(pgDetails.food_details).map(([key, value]) => (
+                    <div key={key} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                      <span className="text-gray-600 capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</span>
+                      <span className="font-medium text-gray-900">{value}</span>
                     </div>
                   ))}
                 </div>
               </div>
             )}
+
+            {/* House Rules */}
+            {pgDetails.house_rules && (
+              <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">House Rules</h2>
+                {/* Mobile: Horizontal scroll, Desktop: Grid */}
+                <div className="md:hidden">
+                  <div className="flex gap-4 overflow-x-auto pb-4" style={{ scrollbarWidth: 'thin' }}>
+                    {Object.entries(pgDetails.house_rules).map(([key, value]) => (
+                      <div key={key} className="flex-shrink-0 w-48 p-3 bg-gray-50 rounded-lg">
+                        <div className="text-gray-600 text-sm mb-1 capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</div>
+                        <div className={`font-medium ${value === 'Yes' ? 'text-green-600' : value === 'No' ? 'text-red-600' : 'text-gray-900'}`}>
+                          {value}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                {/* Desktop: Grid */}
+                <div className="hidden md:grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {Object.entries(pgDetails.house_rules).map(([key, value]) => (
+                    <div key={key} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                      <span className="text-gray-600 capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</span>
+                      <span className={`font-medium ${value === 'Yes' ? 'text-green-600' : value === 'No' ? 'text-red-600' : 'text-gray-900'}`}>
+                        {value}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Nearby Places with Tabs */}
+            {pgDetails.nearby_landmarks_by_category && (
+              <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">Nearby Places</h2>
+
+                {/* Tab Navigation - Horizontal scroll on mobile */}
+                <div className="mb-4 border-b border-gray-200">
+                  <div className="flex gap-2 overflow-x-auto pb-2" style={{ scrollbarWidth: 'thin' }}>
+                    {Object.entries(formatNearbyPlaces(pgDetails.nearby_landmarks_by_category)).map(([category, places]) => (
+                      <button
+                        key={category}
+                        onClick={() => setActiveTab(category)}
+                        className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors duration-200 whitespace-nowrap flex-shrink-0 ${activeTab === category
+                          ? 'text-emerald-600 border-b-2 border-emerald-600 bg-emerald-50'
+                          : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
+                          }`}
+                      >
+                        {formatCategoryName(category)}
+                        {Array.isArray(places) && (
+                          <span className="ml-1 text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-full">
+                            {places.length}
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Tab Content */}
+                <div className="min-h-[200px]">
+                  {activeTab && pgDetails.nearby_landmarks_by_category[activeTab] && (
+                    <div className="space-y-2">
+                      {Array.isArray(pgDetails.nearby_landmarks_by_category[activeTab]) ? (
+                        pgDetails.nearby_landmarks_by_category[activeTab].map((place, index) => (
+                          <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                            <div className="flex-1">
+                              <span className="text-sm font-medium text-gray-800">{place.name}</span>
+                              {place.localityName && (
+                                <span className="text-xs text-gray-500 ml-2">• {place.localityName}</span>
+                              )}
+                              {place.categoryName && (
+                                <div className="text-xs text-gray-400 mt-1">{place.categoryName}</div>
+                              )}
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <span className="text-sm text-emerald-600 font-medium">{place.distance}</span>
+                              <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                              </svg>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-center py-8 text-gray-500">
+                          <svg className="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
+                          <p>No places found in this category</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Pricing */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Pricing</h2>
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Room Price</span>
-                  <span className="font-semibold text-emerald-600 text-lg">{pgDetails.price}</span>
-                </div>
-                {pgDetails.deposit_amount && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Deposit</span>
-                    <span className="font-medium">{pgDetails.deposit_amount}</span>
-                  </div>
-                )}
-                {pgDetails.maintenance_charges && pgDetails.maintenance_charges !== '-' && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Maintenance</span>
-                    <span className="font-medium">{pgDetails.maintenance_charges}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Basic Info */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Basic Info</h2>
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Gender</span>
-                  <span className="font-medium">{pgDetails.gender}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">AC Available</span>
-                  <span className="font-medium">{pgDetails.ac_rooms}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Total Beds</span>
-                  <span className="font-medium">{pgDetails.total_beds}</span>
-                </div>
-                {pgDetails.notice_period && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Notice Period</span>
-                    <span className="font-medium">{pgDetails.notice_period}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Owner Info */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Owner Details</h2>
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Name</span>
-                  <span className="font-medium">{pgDetails.owner_name}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Type</span>
-                  <span className="font-medium">{pgDetails.owner_type}</span>
-                </div>
-                {pgDetails.owner_phone && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Phone</span>
-                    <span className="font-medium">{pgDetails.owner_phone}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Landmarks */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Key Landmarks</h2>
-              <div className="space-y-2">
-                {formatLandmarks(pgDetails.landmarks).map((landmark, index) => (
-                  <div key={index} className="flex items-start space-x-2">
-                    <svg className="w-4 h-4 text-emerald-500 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    <span className="text-sm text-gray-600">{landmark}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Contact Button */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <button className="w-full bg-gradient-to-r from-emerald-500 to-cyan-500 text-white py-3 px-4 rounded-md font-medium hover:from-emerald-600 hover:to-cyan-600 transition-all duration-300">
-                Contact Owner
-              </button>
+          {/* Sidebar Container with sticky-friendly styles */}
+          <div className="lg:col-span-1 h-fit">
+            <div className="sticky top-24">
+              <PGSidebar pgDetails={pgDetails} />
             </div>
           </div>
+
         </div>
       </div>
     </div>

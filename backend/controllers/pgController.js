@@ -1,3 +1,4 @@
+import { all } from 'axios';
 import { loadPGsByArea, loadAllPGs } from '../utils/loadPgData.js';
 import { matchAllPGs } from '../utils/matcher.js';
 
@@ -89,6 +90,7 @@ export const getPGById = (req, res) => {
       gate_timing: pg.gate_timing,
       coordinates: pg.coordinates,
       nearby_landmarks_by_category: pg.nearby_landmarks_by_category,
+      all_photos: pg.all_photos,
     };
 
     return res.status(200).json({
