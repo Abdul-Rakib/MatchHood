@@ -13,7 +13,7 @@ const usePGSearch = () => {
     setSearchQuery(area);
 
     try {
-      const response = await axios.get(`/api/v1/pg/pg-by-area/${area}`);
+      const response = await axios.get(`/api/v1/pgs/pg-by-area/${area}`);
       const { success, data } = response.data;
 
       if (success) {
@@ -35,7 +35,7 @@ const usePGSearch = () => {
     setError(null);
 
     try {
-      const response = await axios.post('/api/v1/pg/match', preferences);
+      const response = await axios.post('/api/v1/pgs/match', preferences);
       const { success, data } = response.data;
 
       if (success) {

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { getBackendAreaName, availableAreas } from '../../utils/areaMapping';
 
 const PGSearchForm = ({ onSearch, onMatchPreferences, loading }) => {
   const [searchType, setSearchType] = useState('area'); // 'area' or 'match'
@@ -14,13 +15,42 @@ const PGSearchForm = ({ onSearch, onMatchPreferences, loading }) => {
   const handleAreaSearch = (e) => {
     e.preventDefault();
     if (areaQuery.trim()) {
-      onSearch(areaQuery.trim());
+      // Convert display name to backend format
+      const backendAreaName = getBackendAreaName(areaQuery.trim());
+      onSearch(backendAreaName);
     }
   };
 
   const handlePreferenceMatch = (e) => {
     e.preventDefault();
-    onMatchPreferences(preferences);
+    
+    // Transform preferences to match backend expectations
+    const transformedPreferences = {
+      budgetMin: 0,
+      budgetMax: Infinity,
+      gender: preferences.gender || '',
+      foodPreference: preferences.foodPreference || '',
+      amenities: preferences.amenities || [],
+      preferredLocation: preferences.area ? getBackendAreaName(preferences.area) : ''
+    };
+
+    // Parse budget range
+    if (preferences.budget) {
+      const budgetRanges = {
+        '0-10000': { min: 0, max: 10000 },
+        '10000-20000': { min: 10000, max: 20000 },
+        '20000-30000': { min: 20000, max: 30000 },
+        '30000+': { min: 30000, max: Infinity }
+      };
+      
+      const range = budgetRanges[preferences.budget];
+      if (range) {
+        transformedPreferences.budgetMin = range.min;
+        transformedPreferences.budgetMax = range.max;
+      }
+    }
+
+    onMatchPreferences(transformedPreferences);
   };
 
   const handleAmenityToggle = (amenity) => {
@@ -36,9 +66,7 @@ const PGSearchForm = ({ onSearch, onMatchPreferences, loading }) => {
     'AC', 'WiFi', 'Parking', 'Laundry', 'Gym', 'Food', 'Power Backup', 'TV'
   ];
 
-  const areas = [
-    'HSR Layout', 'Koramangala', 'Whitefield', 'Indiranagar', 'Jayanagar', 'Banashankari'
-  ];
+  const areas = availableAreas;
 
   return (
     <div className="bg-white rounded-lg shadow-lg p-6 mb-6">

@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import PGSearchForm from '../../components/pg/PGSearchForm';
 import PGResultsList from '../../components/pg/PGResultsList';
 import usePGSearch from '../../../hooks/usePGSearch';
+import { getBackendAreaName } from '../../utils/areaMapping';
 
 const SearchPage = () => {
   const location = useLocation();
@@ -13,7 +14,9 @@ const SearchPage = () => {
     const params = new URLSearchParams(location.search);
     const area = params.get('area');
     if (area) {
-      searchByArea(area);
+      // Convert display name to backend format
+      const backendAreaName = getBackendAreaName(area);
+      searchByArea(backendAreaName);
     }
   }, [location.search]);
 

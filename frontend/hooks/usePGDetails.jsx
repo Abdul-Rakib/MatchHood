@@ -12,7 +12,7 @@ const usePGDetails = () => {
     setPgDetails(null);
 
     try {
-      const response = await axios.get(`/api/v1/pg/pg-by-id/${pgId}`);
+      const response = await axios.get(`/api/v1/pgs/pg-by-id/${pgId}`);
       const { success, data } = response.data;
 
       if (success) {
