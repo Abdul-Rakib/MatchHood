@@ -24,6 +24,7 @@ app.use(cookieParser());
 
 const allowedOrigins = [
   'http://localhost:5173',
+  'https://matchhood.onrender.com',
 ];
 
 app.use(cors({
@@ -38,8 +39,9 @@ app.use(cors({
 }));
 
 app.use(helmet());
-app.use(bodyParser.json({ extended: true }));
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 app.use((err, req, res, next) => {
   if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
     return res.status(400).json({ success: false, msg: 'Invalid JSON format in request body' });
